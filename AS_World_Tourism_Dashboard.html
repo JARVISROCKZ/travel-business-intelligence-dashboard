@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AS World Tourism — Business Intelligence Suite</title>
+<style>
+  :root{
+    --ink:#0F2136;
+    --ink-2:#16304C;
+    --paper:#F7F4EC;
+    --card:#FFFFFF;
+    --line:#E4DFD0;
+    --text:#1B2430;
+    --text-soft:#5B6472;
+    --amber:#E2A542;
+    --amber-deep:#C6862A;
+    --teal:#1C7C74;
+    --teal-soft:#DCEEEC;
+    --coral:#D9634B;
+    --coral-soft:#FBE4DF;
+    --sky:#4C7EA8;
+    --sky-soft:#E2ECF3;
+    --gold-soft:#FBF0D9;
+    --radius:10px;
+    --mono: 'Courier New', Courier, monospace;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--amber); color:var(--ink);}
+
+  /* ---------- layout ---------- */
+  #app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:250px; flex:0 0 250px; background:var(--ink);
+    background-image: linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+    color:#fff; display:flex; flex-direction:column;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{padding:26px 22px 18px; border-bottom:1px dashed rgba(255,255,255,.18);}
+  .brand .kicker{font-family:var(--mono); font-size:10.5px; letter-spacing:.18em; color:var(--amber); text-transform:uppercase;}
+  .brand h1{font-family:var(--serif); font-size:21px; margin:6px 0 2px; line-height:1.15; font-weight:700;}
+  .brand .sub{font-size:11px; color:rgba(255,255,255,.55);}
+
+  .flight-strip{padding:14px 22px; border-bottom:1px dashed rgba(255,255,255,.18); font-family:var(--mono); font-size:10px; color:rgba(255,255,255,.45); letter-spacing:.05em;}
+
+  nav{padding:10px 12px 20px; flex:1;}
+  .navitem{
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    background:transparent; border:none; color:rgba(255,255,255,.72);
+    padding:12px 10px; margin:3px 0; cursor:pointer; border-radius:8px;
+    font-family:var(--sans); font-size:13.5px; position:relative;
+    border-left:3px solid transparent;
+  }
+  .navitem .code{font-family:var(--mono); font-size:10.5px; color:rgba(255,255,255,.4); width:34px; flex-shrink:0; letter-spacing:.03em;}
+  .navitem:hover{background:rgba(255,255,255,.06); color:#fff;}
+  .navitem.active{background:rgba(226,165,66,.14); color:#fff; border-left:3px solid var(--amber);}
+  .navitem.active .code{color:var(--amber);}
+
+  .sidebar-foot{padding:16px 22px 22px; border-top:1px dashed rgba(255,255,255,.18); font-size:10.5px; color:rgba(255,255,255,.4); font-family:var(--mono);}
+
+  main{flex:1; min-width:0; padding:34px 40px 60px;}
+  .pagehead{margin-bottom:22px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px;}
+  .pagehead .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--amber-deep); text-transform:uppercase; margin-bottom:4px;}
+  .pagehead h2{font-family:var(--serif); font-size:28px; margin:0; color:var(--ink);}
+  .pagehead p{margin:6px 0 0; color:var(--text-soft); font-size:13.5px; max-width:640px;}
+  .stamp{font-family:var(--mono); font-size:10.5px; color:var(--text-soft); border:1px solid var(--line); padding:6px 10px; border-radius:20px; background:var(--card); white-space:nowrap;}
+
+  /* ---------- kpi row ---------- */
+  .kpirow{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:14px; margin-bottom:24px;}
+  .kpi{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; position:relative; overflow:hidden;
+  }
+  .kpi::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--amber);}
+  .kpi.teal::before{background:var(--teal);}
+  .kpi.coral::before{background:var(--coral);}
+  .kpi.sky::before{background:var(--sky);}
+  .kpi .label{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--text-soft); margin-bottom:8px;}
+  .kpi .value{font-family:var(--mono); font-size:24px; font-weight:700; color:var(--ink); line-height:1;}
+  .kpi .delta{font-size:11px; margin-top:6px; color:var(--text-soft);}
+
+  /* ---------- grid / cards ---------- */
+  .grid{display:grid; gap:16px; margin-bottom:16px;}
+  .grid.cols-2{grid-template-columns:1fr 1fr;}
+  .grid.cols-3{grid-template-columns:1fr 1fr 1fr;}
+  @media (max-width:1000px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr;}}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px;}
+  .card h3{font-family:var(--serif); font-size:16px; margin:0 0 2px; color:var(--ink);}
+  .card .cardsub{font-size:11.5px; color:var(--text-soft); margin-bottom:14px;}
+  .card.span2{grid-column: span 2;}
+  @media (max-width:1000px){.card.span2{grid-column:span 1;}}
+
+  /* ---------- charts ---------- */
+  .barrow{display:flex; align-items:center; gap:10px; margin:9px 0; font-size:12.5px;}
+  .barrow .lbl{width:150px; flex-shrink:0; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .barrow .track{flex:1; background:#EFEAE0; border-radius:5px; height:16px; overflow:hidden; position:relative;}
+  .barrow .fill{height:100%; border-radius:5px 0 0 5px; background:var(--amber);}
+  .barrow .val{width:78px; text-align:right; font-family:var(--mono); font-size:11.5px; color:var(--text-soft); flex-shrink:0;}
+
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-soft); border-bottom:1px solid var(--line); padding:7px 8px; font-weight:600;}
+  table td{padding:8px 8px; border-bottom:1px solid #F0ECE0; color:var(--text);}
+  table tr:last-child td{border-bottom:none;}
+  table td.num, table th.num{text-align:right; font-family:var(--mono);}
+  .tag{display:inline-block; padding:2px 8px; border-radius:20px; font-size:10.5px; font-family:var(--mono);}
+  .tag.green{background:var(--teal-soft); color:var(--teal);}
+  .tag.red{background:var(--coral-soft); color:var(--coral);}
+  .tag.gold{background:var(--gold-soft); color:var(--amber-deep);}
+  .tag.blue{background:var(--sky-soft); color:var(--sky);}
+
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; font-size:11.5px; color:var(--text-soft);}
+  .legend .dot{width:9px; height:9px; border-radius:2px; display:inline-block; margin-right:6px;}
+
+  .page{display:none; animation: fade .35s ease;}
+  .page.active{display:block;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .footnote{font-size:11px; color:var(--text-soft); margin-top:2px;}
+  .divider-dash{border:none; border-top:1px dashed var(--line); margin:24px 0;}
+
+  svg text{font-family:var(--sans);}
+  .axis-label{font-size:10px; fill:var(--text-soft);}
+
+  @media print{ .sidebar{display:none;} main{padding:0;} }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="kicker">Boarding Pass · BI Suite</div>
+      <h1>AS World<br>Tourism</h1>
+      <div class="sub">Business Operations Dashboard</div>
+    </div>
+    <div class="flight-strip">FY2023–2025 · 500 BOOKINGS · OFFLINE BUILD</div>
+    <nav id="nav"></nav>
+    <div class="sidebar-foot">Generated from<br>AS_WORLD_TOURISM_Dataset.xlsx<br>No internet required</div>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<script id="DATA_JSON" type="application/json">{"kpi": {"totalRevenue": 70717823, "totalCost": 67889114, "totalProfit": 2828709, "marginPct": 4.0, "totalBookings": 500, "confirmed": 478, "cancelled": 22, "repeatCustomers": 227, "avgRating": 4.13, "avgDealSize": 141435, "totalPassengers": 1409, "totalCustomers": 500, "totalDestinations": 13, "totalPackages": 13}, "monthlyTrend": [{"MonthKey": "2023-01", "Revenue": 2255610, "Profit": 83365, "Bookings": 12}, {"MonthKey": "2023-02", "Revenue": 2291772, "Profit": 108155, "Bookings": 13}, {"MonthKey": "2023-03", "Revenue": 4079550, "Profit": 172944, "Bookings": 19}, {"MonthKey": "2023-04", "Revenue": 2653894, "Profit": 98028, "Bookings": 18}, {"MonthKey": "2023-05", "Revenue": 2601331, "Profit": 103315, "Bookings": 15}, {"MonthKey": "2023-06", "Revenue": 2632538, "Profit": 108269, "Bookings": 19}, {"MonthKey": "2023-07", "Revenue": 1154014, "Profit": 43592, "Bookings": 13}, {"MonthKey": "2023-08", "Revenue": 539423, "Profit": 16727, "Bookings": 6}, {"MonthKey": "2023-09", "Revenue": 926169, "Profit": 32403, "Bookings": 8}, {"MonthKey": "2023-10", "Revenue": 3274340, "Profit": 120201, "Bookings": 21}, {"MonthKey": "2023-11", "Revenue": 1976040, "Profit": 91383, "Bookings": 12}, {"MonthKey": "2023-12", "Revenue": 2280450, "Profit": 86773, "Bookings": 13}, {"MonthKey": "2024-01", "Revenue": 2780008, "Profit": 101516, "Bookings": 19}, {"MonthKey": "2024-02", "Revenue": 2371574, "Profit": 93298, "Bookings": 11}, {"MonthKey": "2024-03", "Revenue": 2239087, "Profit": 98765, "Bookings": 20}, {"MonthKey": "2024-04", "Revenue": 1345422, "Profit": 48826, "Bookings": 12}, {"MonthKey": "2024-05", "Revenue": 1658441, "Profit": 76972, "Bookings": 16}, {"MonthKey": "2024-06", "Revenue": 2156361, "Profit": 92252, "Bookings": 15}, {"MonthKey": "2024-07", "Revenue": 1316831, "Profit": 50624, "Bookings": 9}, {"MonthKey": "2024-08", "Revenue": 2046259, "Profit": 70588, "Bookings": 15}, {"MonthKey": "2024-09", "Revenue": 1719103, "Profit": 62628, "Bookings": 16}, {"MonthKey": "2024-10", "Revenue": 1648221, "Profit": 72933, "Bookings": 13}, {"MonthKey": "2024-11", "Revenue": 2463992, "Profit": 105218, "Bookings": 19}, {"MonthKey": "2024-12", "Revenue": 1534586, "Profit": 62066, "Bookings": 10}, {"MonthKey": "2025-01", "Revenue": 1265358, "Profit": 43265, "Bookings": 10}, {"MonthKey": "2025-02", "Revenue": 1478614, "Profit": 49404, "Bookings": 13}, {"MonthKey": "2025-03", "Revenue": 1846175, "Profit": 63589, "Bookings": 16}, {"MonthKey": "2025-04", "Revenue": 2203448, "Profit": 89062, "Bookings": 15}, {"MonthKey": "2025-05", "Revenue": 1936723, "Profit": 67494, "Bookings": 16}, {"MonthKey": "2025-06", "Revenue": 2994133, "Profit": 128197, "Bookings": 20}, {"MonthKey": "2025-07", "Revenue": 1739527, "Profit": 65004, "Bookings": 9}, {"MonthKey": "2025-08", "Revenue": 1005374, "Profit": 49006, "Bookings": 8}, {"MonthKey": "2025-09", "Revenue": 552063, "Profit": 21771, "Bookings": 6}, {"MonthKey": "2025-10", "Revenue": 2047959, "Profit": 97169, "Bookings": 16}, {"MonthKey": "2025-11", "Revenue": 1806394, "Profit": 70064, "Bookings": 16}, {"MonthKey": "2025-12", "Revenue": 1897039, "Profit": 83843, "Bookings": 11}], "topDestinations": [{"DestLabel": "Bangkok & Pattaya, Thailand", "Revenue": 33426457, "Profit": 1291558, "Bookings": 239}, {"DestLabel": "Dubai, Dubai", "Revenue": 8401505, "Profit": 355396, "Bookings": 45}, {"DestLabel": "Tokyo, Japan", "Revenue": 5109380, "Profit": 227329, "Bookings": 16}, {"DestLabel": "Kashmir, India", "Revenue": 4011808, "Profit": 165636, "Bookings": 46}, {"DestLabel": "Singapore, Singapore", "Revenue": 3808424, "Profit": 162731, "Bookings": 16}, {"DestLabel": "Paris & Zurich, France & Switzerland", "Revenue": 3450613, "Profit": 146979, "Bookings": 6}, {"DestLabel": "Manali, India", "Revenue": 2723472, "Profit": 108455, "Bookings": 41}, {"DestLabel": "Bali, Indonesia", "Revenue": 2629126, "Profit": 94668, "Bookings": 14}, {"DestLabel": "Goa, India", "Revenue": 2051657, "Profit": 72857, "Bookings": 39}, {"DestLabel": "Colombo, Sri Lanka", "Revenue": 1401554, "Profit": 59102, "Bookings": 11}, {"DestLabel": "Hanoi/Ho Chi Minh, Vietnam", "Revenue": 1380554, "Profit": 63652, "Bookings": 7}, {"DestLabel": "Kuala Lumpur, Malaysia", "Revenue": 1293574, "Profit": 43346, "Bookings": 9}, {"DestLabel": "Kerala, India", "Revenue": 1029699, "Profit": 37000, "Bookings": 11}], "packageRevenue": [{"Package_Name": "Bangkok & Pattaya Delight", "Revenue": 33426457, "Bookings": 239, "AvgMargin": 3.8}, {"Package_Name": "Dubai Delight", "Revenue": 8401505, "Bookings": 45, "AvgMargin": 4.3}, {"Package_Name": "Tokyo Delight", "Revenue": 5109380, "Bookings": 16, "AvgMargin": 4.6}, {"Package_Name": "Kashmir Delight", "Revenue": 4011808, "Bookings": 46, "AvgMargin": 4.1}, {"Package_Name": "Singapore Delight", "Revenue": 3808424, "Bookings": 16, "AvgMargin": 4.1}, {"Package_Name": "Paris & Zurich Delight", "Revenue": 3450613, "Bookings": 6, "AvgMargin": 3.9}, {"Package_Name": "Manali Delight", "Revenue": 2723472, "Bookings": 41, "AvgMargin": 4.0}, {"Package_Name": "Bali Delight", "Revenue": 2629126, "Bookings": 14, "AvgMargin": 3.9}, {"Package_Name": "Goa Delight", "Revenue": 2051657, "Bookings": 39, "AvgMargin": 3.6}, {"Package_Name": "Colombo Delight", "Revenue": 1401554, "Bookings": 11, "AvgMargin": 4.2}, {"Package_Name": "Hanoi/Ho Chi Minh Delight", "Revenue": 1380554, "Bookings": 7, "AvgMargin": 4.1}, {"Package_Name": "Kuala Lumpur Delight", "Revenue": 1293574, "Bookings": 9, "AvgMargin": 2.8}, {"Package_Name": "Kerala Delight", "Revenue": 1029699, "Bookings": 11, "AvgMargin": 3.6}], "sourcePerf": [{"BookingSource": "Facebook", "Revenue": 15938792, "Bookings": 115, "AvgRating": 4.13}, {"BookingSource": "WhatsApp", "Revenue": 14574446, "Bookings": 92, "AvgRating": 4.03}, {"BookingSource": "Instagram", "Revenue": 14282070, "Bookings": 101, "AvgRating": 4.05}, {"BookingSource": "Website", "Revenue": 13275909, "Bookings": 96, "AvgRating": 4.24}, {"BookingSource": "Referral", "Revenue": 12646606, "Bookings": 96, "AvgRating": 4.22}], "seasonRev": [{"Season": "Off", "Revenue": 10998763, "Bookings": 90, "AvgMargin": 3.74}, {"Season": "Peak", "Revenue": 59719060, "Bookings": 410, "AvgMargin": 3.95}], "discountImpact": [{"DiscountBand": "\u20b91-2K", "AvgMargin": 4.0, "Bookings": 181, "AvgRevenue": 142776.0}, {"DiscountBand": "\u20b92-4K", "AvgMargin": 3.96, "Bookings": 197, "AvgRevenue": 141375.0}, {"DiscountBand": "\u20b94-6K", "AvgMargin": 3.72, "Bookings": 122, "AvgRevenue": 139545.0}], "destPriceRealized": [{"DestLabel": "Bangkok & Pattaya, Thailand", "Visa_Required": "No", "MinPrice": 46000, "MaxPrice": 50000, "AvgPriceRange": 48000.0, "RealizedAvgRevenue": 139859.6527196653, "Bookings": 239, "Revenue": 33426457}, {"DestLabel": "Dubai, Dubai", "Visa_Required": "Yes", "MinPrice": 55000, "MaxPrice": 80000, "AvgPriceRange": 67500.0, "RealizedAvgRevenue": 186700.1111111111, "Bookings": 45, "Revenue": 8401505}, {"DestLabel": "Tokyo, Japan", "Visa_Required": "Yes", "MinPrice": 90000, "MaxPrice": 130000, "AvgPriceRange": 110000.0, "RealizedAvgRevenue": 319336.25, "Bookings": 16, "Revenue": 5109380}, {"DestLabel": "Kashmir, India", "Visa_Required": "No", "MinPrice": 22000, "MaxPrice": 45000, "AvgPriceRange": 33500.0, "RealizedAvgRevenue": 87213.2173913044, "Bookings": 46, "Revenue": 4011808}, {"DestLabel": "Singapore, Singapore", "Visa_Required": "Yes", "MinPrice": 65000, "MaxPrice": 90000, "AvgPriceRange": 77500.0, "RealizedAvgRevenue": 238026.5, "Bookings": 16, "Revenue": 3808424}, {"DestLabel": "Paris & Zurich, France & Switzerland", "Visa_Required": "Yes", "MinPrice": 140000, "MaxPrice": 180000, "AvgPriceRange": 160000.0, "RealizedAvgRevenue": 575102.1666666666, "Bookings": 6, "Revenue": 3450613}, {"DestLabel": "Manali, India", "Visa_Required": "No", "MinPrice": 18000, "MaxPrice": 35000, "AvgPriceRange": 26500.0, "RealizedAvgRevenue": 66426.1463414634, "Bookings": 41, "Revenue": 2723472}, {"DestLabel": "Bali, Indonesia", "Visa_Required": "Yes", "MinPrice": 60000, "MaxPrice": 85000, "AvgPriceRange": 72500.0, "RealizedAvgRevenue": 187794.7142857143, "Bookings": 14, "Revenue": 2629126}, {"DestLabel": "Goa, India", "Visa_Required": "No", "MinPrice": 12000, "MaxPrice": 30000, "AvgPriceRange": 21000.0, "RealizedAvgRevenue": 52606.5897435897, "Bookings": 39, "Revenue": 2051657}, {"DestLabel": "Colombo, Sri Lanka", "Visa_Required": "Yes", "MinPrice": 35000, "MaxPrice": 50000, "AvgPriceRange": 42500.0, "RealizedAvgRevenue": 127414.0, "Bookings": 11, "Revenue": 1401554}, {"DestLabel": "Hanoi/Ho Chi Minh, Vietnam", "Visa_Required": "Yes", "MinPrice": 55000, "MaxPrice": 70000, "AvgPriceRange": 62500.0, "RealizedAvgRevenue": 197222.0, "Bookings": 7, "Revenue": 1380554}, {"DestLabel": "Kuala Lumpur, Malaysia", "Visa_Required": "Yes", "MinPrice": 50000, "MaxPrice": 70000, "AvgPriceRange": 60000.0, "RealizedAvgRevenue": 143730.4444444444, "Bookings": 9, "Revenue": 1293574}, {"DestLabel": "Kerala, India", "Visa_Required": "No", "MinPrice": 20000, "MaxPrice": 40000, "AvgPriceRange": 30000.0, "RealizedAvgRevenue": 93609.0, "Bookings": 11, "Revenue": 1029699}], "peakOffByDest": [{"DestLabel": "Bali, Indonesia", "Season": "Off", "Revenue": 939636, "Bookings": 4}, {"DestLabel": "Bali, Indonesia", "Season": "Peak", "Revenue": 1689490, "Bookings": 10}, {"DestLabel": "Bangkok & Pattaya, Thailand", "Season": "Off", "Revenue": 5691676, "Bookings": 43}, {"DestLabel": "Bangkok & Pattaya, Thailand", "Season": "Peak", "Revenue": 27734781, "Bookings": 196}, {"DestLabel": "Colombo, Sri Lanka", "Season": "Off", "Revenue": 196790, "Bookings": 2}, {"DestLabel": "Colombo, Sri Lanka", "Season": "Peak", "Revenue": 1204764, "Bookings": 9}, {"DestLabel": "Dubai, Dubai", "Season": "Off", "Revenue": 618886, "Bookings": 5}, {"DestLabel": "Dubai, Dubai", "Season": "Peak", "Revenue": 7782619, "Bookings": 40}, {"DestLabel": "Goa, India", "Season": "Off", "Revenue": 545009, "Bookings": 10}, {"DestLabel": "Goa, India", "Season": "Peak", "Revenue": 1506648, "Bookings": 29}, {"DestLabel": "Hanoi/Ho Chi Minh, Vietnam", "Season": "Off", "Revenue": 58471, "Bookings": 1}, {"DestLabel": "Hanoi/Ho Chi Minh, Vietnam", "Season": "Peak", "Revenue": 1322083, "Bookings": 6}, {"DestLabel": "Kashmir, India", "Season": "Off", "Revenue": 241586, "Bookings": 3}, {"DestLabel": "Kashmir, India", "Season": "Peak", "Revenue": 3770222, "Bookings": 43}, {"DestLabel": "Kerala, India", "Season": "Off", "Revenue": 539356, "Bookings": 6}, {"DestLabel": "Kerala, India", "Season": "Peak", "Revenue": 490343, "Bookings": 5}, {"DestLabel": "Kuala Lumpur, Malaysia", "Season": "Off", "Revenue": 150240, "Bookings": 1}, {"DestLabel": "Kuala Lumpur, Malaysia", "Season": "Peak", "Revenue": 1143334, "Bookings": 8}, {"DestLabel": "Manali, India", "Season": "Off", "Revenue": 736983, "Bookings": 10}, {"DestLabel": "Manali, India", "Season": "Peak", "Revenue": 1986489, "Bookings": 31}, {"DestLabel": "Paris & Zurich, France & Switzerland", "Season": "Peak", "Revenue": 3450613, "Bookings": 6}, {"DestLabel": "Singapore, Singapore", "Season": "Off", "Revenue": 858512, "Bookings": 3}, {"DestLabel": "Singapore, Singapore", "Season": "Peak", "Revenue": 2949912, "Bookings": 13}, {"DestLabel": "Tokyo, Japan", "Season": "Off", "Revenue": 421618, "Bookings": 2}, {"DestLabel": "Tokyo, Japan", "Season": "Peak", "Revenue": 4687762, "Bookings": 14}], "visaMixDest": [{"Visa_Required": "Yes", "Count": 8}, {"Visa_Required": "No", "Count": 5}], "bookingVisaMix": [{"Visa_Required": "No", "Bookings": 376}, {"Visa_Required": "Yes", "Bookings": 124}], "visaStatus": [{"Status": "Not Required", "Count": 376}, {"Status": "Approved", "Count": 113}, {"Status": "Pending", "Count": 10}, {"Status": "Rejected", "Count": 1}], "visaApprovalRate": 91.1, "visaApplicable": 124, "visaApproved": 113, "visaRejected": 1, "visaPending": 10, "visaTypeProcessing": [{"VisaType": "Tourist", "AvgProcessingDays": 11.9, "Count": 124}], "destVisaBottleneck": [{"DestLabel": "Hanoi/Ho Chi Minh, Vietnam", "AvgProcessingDays": 14.1, "Applications": 7, "Rejected": 0, "Pending": 0}, {"DestLabel": "Colombo, Sri Lanka", "AvgProcessingDays": 12.5, "Applications": 11, "Rejected": 0, "Pending": 3}, {"DestLabel": "Kuala Lumpur, Malaysia", "AvgProcessingDays": 12.1, "Applications": 9, "Rejected": 0, "Pending": 0}, {"DestLabel": "Dubai, Dubai", "AvgProcessingDays": 12.1, "Applications": 45, "Rejected": 0, "Pending": 3}, {"DestLabel": "Bali, Indonesia", "AvgProcessingDays": 12.0, "Applications": 14, "Rejected": 0, "Pending": 2}, {"DestLabel": "Singapore, Singapore", "AvgProcessingDays": 11.7, "Applications": 16, "Rejected": 0, "Pending": 0}, {"DestLabel": "Tokyo, Japan", "AvgProcessingDays": 10.7, "Applications": 16, "Rejected": 0, "Pending": 2}, {"DestLabel": "Paris & Zurich, France & Switzerland", "AvgProcessingDays": 10.5, "Applications": 6, "Rejected": 1, "Pending": 0}], "customerType": [{"CustomerType": "Returning", "Count": 254}, {"CustomerType": "New", "Count": 246}], "ageDist": [{"AgeBand": "18-25", "Count": 49}, {"AgeBand": "26-35", "Count": 131}, {"AgeBand": "36-45", "Count": 131}, {"AgeBand": "46-55", "Count": 126}, {"AgeBand": "56-65", "Count": 63}, {"AgeBand": "65+", "Count": 0}], "genderDist": [{"Gender": "Female", "Count": 266}, {"Gender": "Male", "Count": 234}], "incomeDist": [{"IncomeBand": "10-20L", "Count": 171}, {"IncomeBand": "5-10L", "Count": 165}, {"IncomeBand": "20L+", "Count": 164}], "stateDist": [{"State": "Maharashtra", "Count": 163}, {"State": "Telangana", "Count": 124}, {"State": "Chhattisgarh", "Count": 40}, {"State": "Gujarat", "Count": 34}, {"State": "Karnataka", "Count": 34}, {"State": "Tamil Nadu", "Count": 33}, {"State": "Madhya Pradesh", "Count": 25}, {"State": "Delhi", "Count": 24}, {"State": "Rajasthan", "Count": 13}, {"State": "West Bengal", "Count": 5}, {"State": "Uttar Pradesh", "Count": 5}], "ratingDist": [{"Rating": 3, "Count": 102}, {"Rating": 4, "Count": 229}, {"Rating": 5, "Count": 169}], "repeatRev": [{"RepeatCustomer": "No", "Revenue": 39040223, "Bookings": 273}, {"RepeatCustomer": "Yes", "Revenue": 31677600, "Bookings": 227}], "paymentModeCount": [{"Mode": "Card", "Count": 296}, {"Mode": "UPI", "Count": 295}, {"Mode": "Bank Transfer", "Count": 283}, {"Mode": "Cash", "Count": 126}], "paymentModeAmount": [{"Mode": "Bank Transfer", "Amount": 22053094}, {"Mode": "Card", "Amount": 20590490}, {"Mode": "Cash", "Amount": 7452423}, {"Mode": "UPI", "Amount": 20621816}], "paymentStatus": [{"Status": "Paid", "Count": 888}, {"Status": "Pending", "Count": 112}], "paymentStatusAmount": [{"Status": "Paid", "Amount": 61768859}, {"Status": "Pending", "Amount": 8948964}], "installmentSplit": [{"Installment": "Advance", "TotalAmount": 28286964, "Count": 500}, {"Installment": "Final", "TotalAmount": 42430859, "Count": 500}], "totalAdvance": 28286964, "totalBalance": 42430859, "bookingPayStatus": [{"PaymentStatus": "Pending", "Count": 178}, {"PaymentStatus": "Paid", "Count": 161}, {"PaymentStatus": "Partial", "Count": 161}], "pendingCollection": 8948964, "paidCollection": 61768859, "airlineFreq": [{"Airline": "IndiGo", "Count": 18}, {"Airline": "Air India", "Count": 10}, {"Airline": "AirAsia", "Count": 7}, {"Airline": "SpiceJet", "Count": 6}, {"Airline": "ANA", "Count": 3}, {"Airline": "Vietnam Airlines", "Count": 3}, {"Airline": "Akasa Air", "Count": 3}, {"Airline": "Emirates", "Count": 2}, {"Airline": "Singapore Airlines", "Count": 2}, {"Airline": "Thai AirAsia", "Count": 2}, {"Airline": "Etihad", "Count": 1}, {"Airline": "Malaysia Airlines", "Count": 1}, {"Airline": "Japan Airlines", "Count": 1}, {"Airline": "Qatar Airways", "Count": 1}], "flightType": [{"Type": "Connecting", "Count": 39}, {"Type": "Direct", "Count": 21}], "hotelCatSupply": [{"Category": "4 Star", "Count": 14}, {"Category": "3 Star", "Count": 9}, {"Category": "5 Star", "Count": 7}], "hotelCatBookings": [{"Category": "4 Star", "Bookings": 291}, {"Category": "3 Star", "Bookings": 203}, {"Category": "5 Star", "Bookings": 6}], "mealPlan": [{"MealPlan": "Breakfast", "Count": 11}, {"MealPlan": "AP", "Count": 11}, {"MealPlan": "MAP", "Count": 8}], "seatPref": [{"SeatPref": "Aisle", "Count": 726}, {"SeatPref": "Window", "Count": 683}], "insurance": [{"Insurance": "No", "Count": 712}, {"Insurance": "Yes", "Count": 697}]}</script>
+<script>
+const DATA = JSON.parse(document.getElementById('DATA_JSON').textContent);
+const INR = n => '₹' + Math.round(n).toLocaleString('en-IN');
+const INRc = n => {
+  n = Math.round(n);
+  if (Math.abs(n) >= 10000000) return '₹' + (n/10000000).toFixed(2) + ' Cr';
+  if (Math.abs(n) >= 100000) return '₹' + (n/100000).toFixed(2) + ' L';
+  return '₹' + n.toLocaleString('en-IN');
+};
+const pct = n => n.toFixed(1) + '%';
+const PALETTE = ['#E2A542','#1C7C74','#D9634B','#4C7EA8','#8E6BAE','#5B6472','#C6862A','#2E9E93'];
+
+/* ---------------- Chart engine (pure SVG, no deps) ---------------- */
+
+function svgEl(w,h,extra){ return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="xMidYMid meet" ${extra||''}>`; }
+
+// Horizontal bar list (HTML, not svg) — used for ranked lists
+function hBarList(container, rows, opts){
+  opts = opts||{};
+  const max = Math.max(...rows.map(r=>r.value)) || 1;
+  const color = opts.color || 'var(--amber)';
+  let html = '';
+  rows.forEach(r=>{
+    const w = Math.max(2, (r.value/max*100));
+    html += `<div class="barrow">
+      <div class="lbl" title="${r.label}">${r.label}</div>
+      <div class="track"><div class="fill" style="width:${w}%; background:${r.color||color}"></div></div>
+      <div class="val">${r.display||r.value}</div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// Vertical column chart (SVG)
+function columnChart(container, rows, opts){
+  opts = opts || {};
+  const W = opts.width||520, H = opts.height||220;
+  const padL=44, padB=34, padT=14, padR=14;
+  const cw = W-padL-padR, ch = H-padT-padB;
+  const max = Math.max(...rows.map(r=>r.value), 1) * 1.15;
+  const bw = cw/rows.length;
+  let bars='', labels='', grid='';
+  for(let i=0;i<=4;i++){
+    const y = padT + ch - (ch*i/4);
+    grid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#E9E4D6" stroke-width="1"/>`;
+    grid += `<text class="axis-label" x="${padL-6}" y="${y+3}" text-anchor="end">${opts.fmtY ? opts.fmtY(max*i/4) : Math.round(max*i/4)}</text>`;
+  }
+  rows.forEach((r,i)=>{
+    const bh = (r.value/max)*ch;
+    const x = padL + i*bw + bw*0.18;
+    const bwid = bw*0.64;
+    const y = padT+ch-bh;
+    bars += `<rect x="${x}" y="${y}" width="${bwid}" height="${bh}" rx="3" fill="${r.color||opts.color||'var(--amber)'}"><title>${r.label}: ${r.display||r.value}</title></rect>`;
+    labels += `<text class="axis-label" x="${x+bwid/2}" y="${H-10}" text-anchor="middle">${r.label}</text>`;
+  });
+  container.innerHTML = svgEl(W,H) + grid + bars + labels + '</svg>';
+}
+
+// Line/area chart for trend, supports multiple series sharing one x
+function lineChart(container, xs, series, opts){
+  opts = opts||{};
+  const W = opts.width||760, H = opts.height||220;
+  const padL=54, padB=30, padT=16, padR=20;
+  const cw=W-padL-padR, ch=H-padT-padB;
+  const allVals = series.flatMap(s=>s.values);
+  const maxV = Math.max(...allVals)*1.15;
+  const minV = 0;
+  const stepX = cw/(xs.length-1||1);
+  let grid='', axisX='';
+  for(let i=0;i<=4;i++){
+    const y = padT + ch - (ch*i/4);
+    grid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#E9E4D6" stroke-width="1"/>`;
+    grid += `<text class="axis-label" x="${padL-8}" y="${y+3}" text-anchor="end">${opts.fmtY ? opts.fmtY(maxV*i/4) : Math.round(maxV*i/4)}</text>`;
+  }
+  xs.forEach((x,i)=>{
+    if(i % (opts.xEvery||1) === 0){
+      axisX += `<text class="axis-label" x="${padL+i*stepX}" y="${H-8}" text-anchor="middle">${x}</text>`;
+    }
+  });
+  let paths='';
+  series.forEach(s=>{
+    let d='', area='';
+    s.values.forEach((v,i)=>{
+      const px = padL+i*stepX;
+      const py = padT + ch - ((v-minV)/(maxV-minV||1))*ch;
+      d += (i===0?'M':'L')+px+','+py+' ';
+    });
+    area = d + `L${padL+cw},${padT+ch} L${padL},${padT+ch} Z`;
+    if(s.area) paths += `<path d="${area}" fill="${s.color}" opacity="0.12"/>`;
+    paths += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.4"/>`;
+    s.values.forEach((v,i)=>{
+      const px = padL+i*stepX;
+      const py = padT + ch - ((v-minV)/(maxV-minV||1))*ch;
+      paths += `<circle cx="${px}" cy="${py}" r="3" fill="${s.color}"><title>${xs[i]}: ${s.fmt?s.fmt(v):v}</title></circle>`;
+    });
+  });
+  container.innerHTML = svgEl(W,H) + grid + paths + axisX + '</svg>';
+}
+
+// Donut chart
+function donutChart(container, rows, opts){
+  opts = opts||{};
+  const size = opts.size||180, r=size*0.38, cx=size/2, cy=size/2, rw=opts.thickness||22;
+  const total = rows.reduce((a,b)=>a+b.value,0)||1;
+  let angle=-90, paths='';
+  rows.forEach((row,i)=>{
+    const frac = row.value/total;
+    const start = angle;
+    const end = angle + frac*360;
+    angle = end;
+    const large = (end-start)>180?1:0;
+    const toXY = (a,rad)=>{
+      const rad2 = (a*Math.PI/180);
+      return [cx+rad*Math.cos(rad2), cy+rad*Math.sin(rad2)];
+    };
+    const [x1,y1] = toXY(start, r);
+    const [x2,y2] = toXY(end, r);
+    const col = row.color || PALETTE[i%PALETTE.length];
+    paths += `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}" fill="none" stroke="${col}" stroke-width="${rw}"><title>${row.label}: ${row.value} (${(frac*100).toFixed(1)}%)</title></path>`;
+  });
+  let center = opts.center ? `<text x="${cx}" y="${cy-3}" text-anchor="middle" font-family="var(--mono)" font-size="18" font-weight="700" fill="var(--ink)">${opts.center}</text><text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="9.5" fill="var(--text-soft)">${opts.centerSub||''}</text>` : '';
+  container.innerHTML = `<div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+    ${svgEl(size,size)}${paths}${center}</svg>
+    <div class="legend" style="flex-direction:column; gap:7px; margin-top:0;">
+      ${rows.map((row,i)=>`<div><span class="dot" style="background:${row.color||PALETTE[i%PALETTE.length]}"></span>${row.label} — <strong>${row.display||row.value}</strong></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ================= PAGE DEFINITIONS ================= */
+const PAGES = [
+  {code:'01·OVW', title:'Executive Overview', id:'overview'},
+  {code:'02·SLS', title:'Sales & Revenue', id:'sales'},
+  {code:'03·DST', title:'Destination & Peak Travel', id:'destinations'},
+  {code:'04·VSA', title:'Visa & Documentation Ops', id:'visa'},
+  {code:'05·CUS', title:'Customer Insights', id:'customers'},
+  {code:'06·PAY', title:'Payments & Collections', id:'payments'},
+  {code:'07·FLH', title:'Flights & Hotels', id:'flighthotels'},
+];
+
+function buildNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = PAGES.map(p=>`<button class="navitem" data-id="${p.id}"><span class="code">${p.code}</span><span>${p.title}</span></button>`).join('');
+  nav.querySelectorAll('.navitem').forEach(btn=>{
+    btn.addEventListener('click', ()=> showPage(btn.dataset.id));
+  });
+}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelector(`.navitem[data-id="${id}"]`).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function head(eyebrow, title, sub, stamp){
+  return `<div class="pagehead">
+    <div>
+      <div class="eyebrow">${eyebrow}</div>
+      <h2>${title}</h2>
+      <p>${sub}</p>
+    </div>
+    <div class="stamp">${stamp}</div>
+  </div>`;
+}
+
+function buildMain(){
+  const main = document.getElementById('main');
+  main.innerHTML = PAGES.map(p=>`<section class="page" id="page-${p.id}"></section>`).join('');
+  renderOverview();
+  renderSales();
+  renderDestinations();
+  renderVisa();
+  renderCustomers();
+  renderPayments();
+  renderFlightsHotels();
+}
+
+/* ---------- 1. EXECUTIVE OVERVIEW ---------- */
+function renderOverview(){
+  const k = DATA.kpi;
+  const el = document.getElementById('page-overview');
+  el.innerHTML = `
+    ${head('Gate 01 · The 10-second health check','Executive Overview','Trip-level performance across all confirmed and cancelled bookings, Jan 2023 – Dec 2025.', 'BOARDING · ALL ROUTES')}
+    <div class="kpirow">
+      <div class="kpi"><div class="label">Total Revenue</div><div class="value">${INRc(k.totalRevenue)}</div><div class="delta">${k.totalBookings} bookings logged</div></div>
+      <div class="kpi teal"><div class="label">Total Profit</div><div class="value">${INRc(k.totalProfit)}</div><div class="delta">on ${INRc(k.totalCost)} cost base</div></div>
+      <div class="kpi teal"><div class="label">Overall Margin</div><div class="value">${pct(k.marginPct)}</div><div class="delta">of gross revenue</div></div>
+      <div class="kpi sky"><div class="label">Avg Deal Size</div><div class="value">${INRc(k.avgDealSize)}</div><div class="delta">per booking</div></div>
+      <div class="kpi"><div class="label">Confirmed / Cancelled</div><div class="value">${k.confirmed} / ${k.cancelled}</div><div class="delta">${pct(k.cancelled/k.totalBookings*100)} cancellation rate</div></div>
+      <div class="kpi coral"><div class="label">Avg Rating</div><div class="value">${k.avgRating} / 5</div><div class="delta">${k.repeatCustomers} repeat customers</div></div>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card span2">
+        <h3>Revenue &amp; Profit Trend</h3>
+        <div class="cardsub">Monthly booking-date revenue vs. profit, full dataset window</div>
+        <div id="chart-trend"></div>
+        <div class="legend"><span><span class="dot" style="background:var(--amber)"></span>Revenue</span><span><span class="dot" style="background:var(--teal)"></span>Profit</span></div>
+      </div>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Top Destinations by Revenue</h3>
+        <div class="cardsub">All ${k.totalDestinations} destinations, ${k.totalPackages} packages</div>
+        <div id="chart-topdest"></div>
+      </div>
+      <div class="card">
+        <h3>Portfolio Snapshot</h3>
+        <div class="cardsub">Where the business stands today</div>
+        <table>
+          <tr><td>Total Customers</td><td class="num">${k.totalCustomers.toLocaleString()}</td></tr>
+          <tr><td>Total Passengers Travelled</td><td class="num">${k.totalPassengers.toLocaleString()}</td></tr>
+          <tr><td>Repeat Customers</td><td class="num">${k.repeatCustomers} (${pct(k.repeatCustomers/k.totalCustomers*100)})</td></tr>
+          <tr><td>Confirmed Bookings</td><td class="num">${k.confirmed}</td></tr>
+          <tr><td>Cancelled Bookings</td><td class="num">${k.cancelled}</td></tr>
+          <tr><td>Destinations on Offer</td><td class="num">${k.totalDestinations}</td></tr>
+          <tr><td>Active Packages</td><td class="num">${k.totalPackages}</td></tr>
+        </table>
+        <p class="footnote">Note: figures reflect a single-proprietor operation — all sales, visa filing, and coordination are handled directly (no separate sales/ops staff on record in this dataset).</p>
+      </div>
+    </div>
+  `;
+  const months = DATA.monthlyTrend.map(r=>r.MonthKey.slice(2));
+  lineChart(document.getElementById('chart-trend'), months, [
+    {values: DATA.monthlyTrend.map(r=>r.Revenue), color:'#E2A542', area:true, fmt:INRc},
+    {values: DATA.monthlyTrend.map(r=>r.Profit), color:'#1C7C74', area:true, fmt:INRc},
+  ], {width:900, height:230, xEvery:2, fmtY:INRc});
+
+  hBarList(document.getElementById('chart-topdest'), DATA.topDestinations.slice(0,8).map(r=>({
+    label:r.DestLabel, value:r.Revenue, display:INRc(r.Revenue)
+  })));
+}
+
+/* ---------- 2. SALES & REVENUE PERFORMANCE ---------- */
+function renderSales(){
+  const el = document.getElementById('page-sales');
+  el.innerHTML = `
+    ${head('Gate 02 · Where the revenue comes from','Sales & Revenue Performance','Revenue by package, booking source, season, and the effect of discounting on margin.', 'DEPARTURE · REVENUE')}
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Revenue by Package</h3>
+        <div class="cardsub">All ${DATA.packageRevenue.length} active packages</div>
+        <div id="chart-pkgrev"></div>
+      </div>
+      <div class="card">
+        <h3>Booking Source Performance</h3>
+        <div class="cardsub">Revenue and volume by acquisition channel</div>
+        <table>
+          <thead><tr><th>Source</th><th class="num">Bookings</th><th class="num">Revenue</th><th class="num">Avg Rating</th></tr></thead>
+          <tbody>
+          ${DATA.sourcePerf.map(r=>`<tr><td>${r.BookingSource}</td><td class="num">${r.Bookings}</td><td class="num">${INRc(r.Revenue)}</td><td class="num">${r.AvgRating}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Peak vs Off-Peak Season</h3>
+        <div class="cardsub">Revenue, bookings and average margin split</div>
+        <div id="chart-season"></div>
+      </div>
+      <div class="card">
+        <h3>Discount Impact on Margin</h3>
+        <div class="cardsub">Average margin % by discount band applied</div>
+        <table>
+          <thead><tr><th>Discount Band</th><th class="num">Bookings</th><th class="num">Avg Revenue</th><th class="num">Avg Margin</th></tr></thead>
+          <tbody>
+          ${DATA.discountImpact.map(r=>`<tr><td>${r.DiscountBand}</td><td class="num">${r.Bookings}</td><td class="num">${INRc(r.AvgRevenue)}</td><td class="num">${pct(r.AvgMargin)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+        <p class="footnote">Deeper discounting tracks with thinner margin per booking — worth watching on high-discount packages.</p>
+      </div>
+    </div>
+  `;
+  hBarList(document.getElementById('chart-pkgrev'), DATA.packageRevenue.map(r=>({
+    label:r.Package_Name, value:r.Revenue, display:INRc(r.Revenue)
+  })));
+  donutChart(document.getElementById('chart-season'), DATA.seasonRev.map((r,i)=>({
+    label:r.Season, value:r.Revenue, display:`${INRc(r.Revenue)} · ${r.Bookings} bkgs`, color: r.Season==='Peak'?'#E2A542':'#4C7EA8'
+  })), {center: pct(DATA.seasonRev.find(r=>r.Season==='Peak').Revenue/(DATA.seasonRev.reduce((a,b)=>a+b.Revenue,0))*100), centerSub:'Peak share'});
+}
+
+/* ---------- 3. DESTINATION & PEAK TRAVEL ANALYTICS ---------- */
+function renderDestinations(){
+  const el = document.getElementById('page-destinations');
+  const visaBk = DATA.bookingVisaMix;
+  el.innerHTML = `
+    ${head('Gate 03 · Peak-location intelligence','Destination & Peak Travel Analytics','Bookings and revenue by destination, price range vs. what was actually realised, and the visa-required mix.', 'TRANSIT · DESTINATIONS')}
+    <div class="grid cols-2">
+      <div class="card span2">
+        <h3>Bookings by Destination</h3>
+        <div class="cardsub">Sorted by revenue, all ${DATA.destPriceRealized.length} destinations</div>
+        <div id="chart-destbook"></div>
+      </div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Listed Price Range vs. Realised Avg Revenue</h3>
+        <div class="cardsub">Per-booking average revenue vs. the brochure Min–Max band</div>
+        <table>
+          <thead><tr><th>Destination</th><th class="num">Listed Range</th><th class="num">Realised Avg</th></tr></thead>
+          <tbody>
+          ${DATA.destPriceRealized.map(r=>`<tr><td>${r.DestLabel}</td><td class="num">${INRc(r.MinPrice)}–${INRc(r.MaxPrice)}</td><td class="num">${r.Bookings>0?INRc(r.RealizedAvgRevenue):'—'}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Visa-Required vs Visa-Free Mix</h3>
+        <div class="cardsub">Destination catalog (left) and actual booking volume (right)</div>
+        <div style="display:flex; gap:24px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:180px;">
+            <div class="cardsub" style="margin-bottom:6px;">By destination catalog</div>
+            <div id="chart-visadestmix"></div>
+          </div>
+          <div style="flex:1; min-width:180px;">
+            <div class="cardsub" style="margin-bottom:6px;">By booking volume</div>
+            <div id="chart-visabookmix"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  hBarList(document.getElementById('chart-destbook'), DATA.destPriceRealized.filter(r=>r.Bookings>0).map(r=>({
+    label:r.DestLabel, value:r.Revenue, display:`${r.Bookings} bkgs · ${INRc(r.Revenue)}`
+  })));
+  donutChart(document.getElementById('chart-visadestmix'), DATA.visaMixDest.map(r=>({
+    label:r.Visa_Required==='Yes'?'Visa Required':'Visa Free', value:r.Count, color:r.Visa_Required==='Yes'?'#D9634B':'#1C7C74'
+  })), {size:150});
+  donutChart(document.getElementById('chart-visabookmix'), DATA.bookingVisaMix.map(r=>({
+    label:r.Visa_Required==='Yes'?'Visa Required':'Visa Free', value:r.Bookings, color:r.Visa_Required==='Yes'?'#D9634B':'#1C7C74'
+  })), {size:150});
+}
+
+/* ---------- 4. VISA & DOCUMENTATION OPS ---------- */
+function renderVisa(){
+  const el = document.getElementById('page-visa');
+  el.innerHTML = `
+    ${head('Gate 04 · Operational maturity','Visa & Documentation Ops','Approval rates, processing times, and where visa applications tend to bottleneck.', 'CUSTOMS · VISA DESK')}
+    <div class="kpirow">
+      <div class="kpi teal"><div class="label">Approval Rate (applicable cases)</div><div class="value">${pct(DATA.visaApprovalRate)}</div><div class="delta">${DATA.visaApproved} of ${DATA.visaApplicable} applications</div></div>
+      <div class="kpi"><div class="label">Pending</div><div class="value">${DATA.visaPending}</div><div class="delta">awaiting decision</div></div>
+      <div class="kpi coral"><div class="label">Rejected</div><div class="value">${DATA.visaRejected}</div><div class="delta">of ${DATA.visaApplicable} applicable</div></div>
+      <div class="kpi sky"><div class="label">Visa Not Required</div><div class="value">${DATA.visaStatus.find(r=>r.Status==='Not Required').Count}</div><div class="delta">of ${DATA.kpi.totalBookings} bookings</div></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Visa Status Breakdown</h3>
+        <div class="cardsub">All 500 bookings</div>
+        <div id="chart-visastatus"></div>
+      </div>
+      <div class="card">
+        <h3>Avg Processing Days by Visa Type</h3>
+        <div class="cardsub">Applicable visa types only</div>
+        <div id="chart-visatype"></div>
+      </div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card span2">
+        <h3>Bottleneck Destinations</h3>
+        <div class="cardsub">Destinations ranked by average visa processing time</div>
+        <table>
+          <thead><tr><th>Destination</th><th class="num">Applications</th><th class="num">Avg Processing Days</th><th class="num">Pending</th><th class="num">Rejected</th></tr></thead>
+          <tbody>
+          ${DATA.destVisaBottleneck.map(r=>`<tr><td>${r.DestLabel}</td><td class="num">${r.Applications}</td><td class="num">${r.AvgProcessingDays}</td><td class="num">${r.Pending}</td><td class="num">${r.Rejected}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  donutChart(document.getElementById('chart-visastatus'), DATA.visaStatus.map(r=>({
+    label:r.Status, value:r.Count,
+    color: r.Status==='Approved'?'#1C7C74':r.Status==='Rejected'?'#D9634B':r.Status==='Pending'?'#E2A542':'#4C7EA8'
+  })));
+  columnChart(document.getElementById('chart-visatype'), DATA.visaTypeProcessing.map(r=>({
+    label:r.VisaType, value:r.AvgProcessingDays, display:r.AvgProcessingDays+' days', color:'#4C7EA8'
+  })), {width:400, height:220});
+}
+
+/* ---------- 5. CUSTOMER INSIGHTS ---------- */
+function renderCustomers(){
+  const el = document.getElementById('page-customers');
+  const newCt = DATA.customerType.find(r=>r.CustomerType==='New').Count;
+  const retCt = DATA.customerType.find(r=>r.CustomerType==='Returning').Count;
+  el.innerHTML = `
+    ${head('Gate 05 · Who is flying with us','Customer Insights','Demographics, repeat behaviour, and satisfaction across ${DATA.kpi.totalCustomers} customers.'.replace('${DATA.kpi.totalCustomers}', DATA.kpi.totalCustomers), 'PASSENGER · MANIFEST')}
+    <div class="kpirow">
+      <div class="kpi"><div class="label">New Customers</div><div class="value">${newCt}</div><div class="delta">${pct(newCt/DATA.kpi.totalCustomers*100)} of base</div></div>
+      <div class="kpi teal"><div class="label">Returning Customers</div><div class="value">${retCt}</div><div class="delta">${pct(retCt/DATA.kpi.totalCustomers*100)} of base</div></div>
+      <div class="kpi coral"><div class="label">Avg Rating</div><div class="value">${DATA.kpi.avgRating} / 5</div><div class="delta">across confirmed trips</div></div>
+      <div class="kpi sky"><div class="label">Top State</div><div class="value" style="font-size:17px;">${DATA.stateDist[0].State}</div><div class="delta">${DATA.stateDist[0].Count} customers</div></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Age Distribution</h3>
+        <div class="cardsub">Customer base by age band</div>
+        <div id="chart-age"></div>
+      </div>
+      <div class="card">
+        <h3>Gender &amp; Income Band</h3>
+        <div class="cardsub">Two-way demographic split</div>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:150px;"><div class="cardsub" style="margin-bottom:6px;">Gender</div><div id="chart-gender"></div></div>
+          <div style="flex:1; min-width:150px;"><div class="cardsub" style="margin-bottom:6px;">Income Band</div><div id="chart-income"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Client Base by State</h3>
+        <div class="cardsub">Top states by customer count</div>
+        <div id="chart-state"></div>
+      </div>
+      <div class="card">
+        <h3>Rating Distribution &amp; Repeat Value</h3>
+        <div class="cardsub">Customer satisfaction and revenue by repeat status</div>
+        <div id="chart-rating"></div>
+        <hr class="divider-dash">
+        <table>
+          <thead><tr><th>Customer</th><th class="num">Bookings</th><th class="num">Revenue</th></tr></thead>
+          <tbody>
+          ${DATA.repeatRev.map(r=>`<tr><td>${r.RepeatCustomer==='Yes'?'Repeat':'First-time'}</td><td class="num">${r.Bookings}</td><td class="num">${INRc(r.Revenue)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  columnChart(document.getElementById('chart-age'), DATA.ageDist.map(r=>({label:r.AgeBand, value:r.Count, display:r.Count, color:'#E2A542'})), {width:480, height:200});
+  donutChart(document.getElementById('chart-gender'), DATA.genderDist.map((r,i)=>({label:r.Gender, value:r.Count})), {size:150});
+  donutChart(document.getElementById('chart-income'), DATA.incomeDist.map((r,i)=>({label:r.IncomeBand, value:r.Count})), {size:150});
+  hBarList(document.getElementById('chart-state'), DATA.stateDist.slice(0,8).map(r=>({label:r.State, value:r.Count, display:r.Count})), {color:'#4C7EA8'});
+  columnChart(document.getElementById('chart-rating'), DATA.ratingDist.map(r=>({label:r.Rating+'★', value:r.Count, display:r.Count, color:'#1C7C74'})), {width:480, height:180});
+}
+
+/* ---------- 6. PAYMENTS & COLLECTIONS ---------- */
+function renderPayments(){
+  const el = document.getElementById('page-payments');
+  const advPct = (DATA.totalAdvance/(DATA.totalAdvance+DATA.totalBalance)*100);
+  el.innerHTML = `
+    ${head('Gate 06 · Cash in the till','Payments & Collections','Advance vs balance collection, payment mode preference, and where money is still outstanding.', 'FINANCE · TREASURY')}
+    <div class="kpirow">
+      <div class="kpi teal"><div class="label">Collected (Paid)</div><div class="value">${INRc(DATA.paidCollection)}</div><div class="delta">across all installments</div></div>
+      <div class="kpi coral"><div class="label">Pending Collection</div><div class="value">${INRc(DATA.pendingCollection)}</div><div class="delta">outstanding across installments</div></div>
+      <div class="kpi"><div class="label">Advance Collected</div><div class="value">${INRc(DATA.totalAdvance)}</div><div class="delta">${pct(advPct)} of booking value</div></div>
+      <div class="kpi sky"><div class="label">Balance Due</div><div class="value">${INRc(DATA.totalBalance)}</div><div class="delta">${pct(100-advPct)} of booking value</div></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Payment Mode Split</h3>
+        <div class="cardsub">By transaction count, ${DATA.paymentModeCount.reduce((a,b)=>a+b.Count,0)} payments</div>
+        <div id="chart-paymode"></div>
+      </div>
+      <div class="card">
+        <h3>Payment Status</h3>
+        <div class="cardsub">Booking-level payment status (Advance + Final)</div>
+        <div id="chart-paystatus"></div>
+      </div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card span2">
+        <h3>Installment Breakdown</h3>
+        <div class="cardsub">Advance vs Final collection totals</div>
+        <table>
+          <thead><tr><th>Installment</th><th class="num">Transactions</th><th class="num">Total Amount</th></tr></thead>
+          <tbody>
+          ${DATA.installmentSplit.map(r=>`<tr><td>${r.Installment}</td><td class="num">${r.Count}</td><td class="num">${INRc(r.TotalAmount)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  donutChart(document.getElementById('chart-paymode'), DATA.paymentModeCount.map(r=>({label:r.Mode, value:r.Count})));
+  donutChart(document.getElementById('chart-paystatus'), DATA.bookingPayStatus.map(r=>({
+    label:r.PaymentStatus, value:r.Count,
+    color: r.PaymentStatus==='Paid'?'#1C7C74':r.PaymentStatus==='Pending'?'#D9634B':'#E2A542'
+  })));
+}
+
+/* ---------- 7. FLIGHTS & HOTELS UTILIZATION ---------- */
+function renderFlightsHotels(){
+  const el = document.getElementById('page-flighthotels');
+  el.innerHTML = `
+    ${head('Gate 07 · Supply-side utilisation','Flights & Hotels Utilization','Airline and route frequency, direct vs connecting mix, and hotel category / meal-plan preferences.', 'OPERATIONS · FLEET')}
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Airline Frequency</h3>
+        <div class="cardsub">Flight options on file, by airline</div>
+        <div id="chart-airline"></div>
+      </div>
+      <div class="card">
+        <h3>Direct vs Connecting</h3>
+        <div class="cardsub">All flight options are Economy cabin</div>
+        <div id="chart-flighttype"></div>
+      </div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Hotel Category — Supply vs Bookings</h3>
+        <div class="cardsub">Catalog mix (left) vs. what customers actually booked (right)</div>
+        <div style="display:flex; gap:24px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:180px;"><div class="cardsub" style="margin-bottom:6px;">Hotel catalog</div><div id="chart-hotelsupply"></div></div>
+          <div style="flex:1; min-width:180px;"><div class="cardsub" style="margin-bottom:6px;">Booking volume</div><div id="chart-hotelbook"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Meal Plan &amp; Seat Preference</h3>
+        <div class="cardsub">Hotel meal plans and passenger seat choices</div>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:150px;"><div class="cardsub" style="margin-bottom:6px;">Meal Plan (hotels)</div><div id="chart-meal"></div></div>
+          <div style="flex:1; min-width:150px;"><div class="cardsub" style="margin-bottom:6px;">Seat Pref (${DATA.seatPref.reduce((a,b)=>a+b.Count,0)} pax)</div><div id="chart-seat"></div></div>
+        </div>
+        <p class="footnote">Travel insurance uptake: ${DATA.insurance.find(r=>r.Insurance==='Yes').Count} of ${DATA.insurance.reduce((a,b)=>a+b.Count,0)} passengers (${pct(DATA.insurance.find(r=>r.Insurance==='Yes').Count/DATA.insurance.reduce((a,b)=>a+b.Count,0)*100)}).</p>
+      </div>
+    </div>
+  `;
+  hBarList(document.getElementById('chart-airline'), DATA.airlineFreq.map(r=>({label:r.Airline, value:r.Count, display:r.Count})), {color:'#4C7EA8'});
+  donutChart(document.getElementById('chart-flighttype'), DATA.flightType.map(r=>({label:r.Type, value:r.Count})));
+  donutChart(document.getElementById('chart-hotelsupply'), DATA.hotelCatSupply.map(r=>({label:r.Category, value:r.Count})), {size:150});
+  donutChart(document.getElementById('chart-hotelbook'), DATA.hotelCatBookings.map(r=>({label:r.Category, value:r.Bookings})), {size:150});
+  donutChart(document.getElementById('chart-meal'), DATA.mealPlan.map(r=>({label:r.MealPlan, value:r.Count})), {size:150});
+  donutChart(document.getElementById('chart-seat'), DATA.seatPref.map(r=>({label:r.SeatPref, value:r.Count})), {size:150});
+}
+
+/* ---------------- INIT ---------------- */
+buildNav();
+buildMain();
+showPage('overview');
+</script>
+</body>
+</html>
