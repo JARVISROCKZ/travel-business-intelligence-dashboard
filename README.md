@@ -2,6 +2,18 @@
 
 A 7-page offline BI dashboard built from `AS_WORLD_TOURISM_Dataset.xlsx`. No build step, no server, no internet connection, no dependencies — open `index.html` in any browser and it works.
 
+# ✈️ Travel Operations Analytics Platform
+
+[![Live Demo](https://img.shields.io/badge/🌐-Live%20Demo-blue?style=for-the-badge)](https://JARVISROCKZ.github.io/travel-business-intelligence-dashboard/)
+
+[![GitHub](https://img.shields.io/badge/Repository-View-black?style=for-the-badge&logo=github)](https://github.com/YOUR_USERNAME/travel-business-intelligence-dashboard)
+
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+
+[![Stars](https://img.shields.io/github/stars/YOUR_USERNAME/travel-business-intelligence-dashboard?style=for-the-badge)](https://github.com/YOUR_USERNAME/travel-business-intelligence-dashboard)
+
+
+
 ## Files
 
 ```
@@ -50,3 +62,4 @@ leaderboard" is included — booking-source performance is used in its place.
 
 Any modern browser (Chrome, Edge, Firefox, Safari). No Internet Explorer support —
 the SVG chart engine uses standard ES6 (arrow functions, template literals).
+
