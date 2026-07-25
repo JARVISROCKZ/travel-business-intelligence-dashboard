@@ -14,6 +14,44 @@ A 7-page offline BI dashboard built from `AS_WORLD_TOURISM_Dataset.xlsx`. No bui
 
 
 
+# 📸 Dashboard Preview
+
+## 🏠 Executive Overview
+
+![Executive Overview](assets/overview.png)
+
+---
+
+## 💰 Sales & Revenue Performance
+
+![Sales & Revenue Performance](assets/sales.png)
+
+---
+
+## 🌍 Destination & Peak Travel Analytics
+
+![Destination & Peak Travel Analytics](assets/destination.png)
+
+---
+
+## 🛂 Visa & Documentation Operations
+
+![Visa & Documentation Operations](assets/visa.png)
+
+---
+
+## 👥 Customer Insights
+
+![Customer Insights](assets/customer_insights.png)
+
+---
+
+## ✈️ Flights & Hotels Utilization
+
+![Flights & Hotels Utilization](assets/flights_hotels.png)
+
+
+
 ## Files
 
 ```
